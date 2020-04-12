@@ -32,6 +32,7 @@
         , push_notification_token/5
         , default_headers/0
         , generate_token/2
+        , generate_token/3
         , get_feedback/0
         , get_feedback/1
         ]).
@@ -55,6 +56,7 @@
                       , apns_priority    => binary()
                       , apns_topic       => binary()
                       , apns_collapse_id => binary()
+                      , apns_push_type   => binary()
                       , apns_auth_token  => binary()
                       }.
 -type feedback()  :: apns_feedback:feedback().
@@ -147,9 +149,13 @@ push_notification_token(ConnectionId, Token, DeviceId, JSONMap, Headers) ->
                                    , Notification
                                    , Headers
                                    ).
-
 -spec generate_token(binary(), binary()) -> token().
 generate_token(TeamId, KeyId) ->
+  {ok, KeyPath} = application:get_env(apns, token_keyfile),
+  generate_token(TeamId, KeyId, KeyPath).
+
+-spec generate_token(binary(), binary(), string()) -> token().
+generate_token(TeamId, KeyId, KeyPath) ->
   Algorithm = <<"ES256">>,
   Header = jsx:encode([ {alg, Algorithm}
                       , {typ, <<"JWT">>}
@@ -161,7 +167,7 @@ generate_token(TeamId, KeyId) ->
   HeaderEncoded = base64url:encode(Header),
   PayloadEncoded = base64url:encode(Payload),
   DataEncoded = <<HeaderEncoded/binary, $., PayloadEncoded/binary>>,
-  Signature = apns_utils:sign(DataEncoded),
+  Signature = apns_utils:sign(DataEncoded, KeyPath),
   <<DataEncoded/binary, $., Signature/binary>>.
 
 %% @doc Get the default headers from environment variables.
@@ -172,9 +178,11 @@ default_headers() ->
             , apns_priority
             , apns_topic
             , apns_collapse_id
+            , apns_push_type
             ],
 
-  default_headers(Headers, #{}).
+  %% The apns_push_type key is required starting from iOS 13.
+  default_headers(Headers, #{apns_push_type => <<"alert">>}).
 
 %% Requests for feedback to APNs. This requires Provider Certificate.
 -spec get_feedback() -> [feedback()] | {error, term()} | timeout.
@@ -206,10 +214,10 @@ get_feedback(Config) ->
 default_headers([], Headers) ->
   Headers;
 default_headers([Key | Keys], Headers) ->
-  case application:get_env(apns, Key) of
-    {ok, undefined} ->
+  case application:get_env(apns, Key, undefined) of
+    undefined ->
       default_headers(Keys, Headers);
-    {ok, Value} ->
+    Value ->
       NewHeaders = Headers#{Key => to_binary(Value)},
       default_headers(Keys, NewHeaders)
   end.
