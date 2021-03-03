@@ -1,5 +1,5 @@
 
-Apns4erl v2 [![Build Status](https://travis-ci.org/inaka/apns4erl.svg?branch=master)](https://travis-ci.org/inaka/apns4erl)[![codecov](https://codecov.io/gh/inaka/apns4erl/branch/master/graph/badge.svg)](https://codecov.io/gh/inaka/apns4erl)
+Apns4erl v2 [![Build Status](https://github.com/inaka/apns4erl/workflows/build/badge.svg)](https://github.com/inaka/apns4erl)[![codecov](https://codecov.io/gh/inaka/apns4erl/branch/master/graph/badge.svg)](https://codecov.io/gh/inaka/apns4erl)
 ========
 
 <img src="https://media.giphy.com/media/uZQP0PR0BmkGA/giphy.gif" align="right" style="float:right" height="400" />
@@ -28,7 +28,7 @@ If you find any **bugs** or have a **problem** while using Apns4erl, please [ope
 
 First we have to fill our `config` data. There are two ways for do this, one is filling a `config` file. This is an example you can find at `test/test.config`:
 
-```
+```erlang
 {
   apns,
   [ {apple_host,       "api.development.push.apple.com"}
